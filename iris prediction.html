@@ -1,0 +1,47 @@
+<html>
+    <head></head>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <script lang='js'>
+        async function run(){
+            const csvUrl='./iris.csv';
+            const trainingData=tf.data.csv(csvUrl,{
+                columnConfigs:{species:{isLabel:true}}
+            });
+        
+        const numOfFeatures=(await trainingData.columnNames()).length-1;
+        const numOfSamples=150;
+        const convertedData= trainingData.map(({xs,ys}) =>{
+            const labels =[
+                ys.species=="setosa"?1:0,
+                ys.species=="virginica"?1:0,
+                ys.species=="versicolor"?1:0
+            ]
+            return{xs:Object.values(xs),ys:Object.values(labels)};
+        }).batch(10);
+        const model=tf.sequential();
+        model.add(tf.layers.dense({units:5,inputShape:[numOfFeatures],activation:"sigmoid"}));
+        model.add(tf.layers.dense({units:3,activation:"softmax"}));
+        
+        model.compile({loss:'categoricalCrossentropy',optimizer:tf.train.adam(0.06)});
+        model.summary();
+        async function doTraining(model){
+            const history=await model.fit Dataset(convertedData,{
+                epochs:100,callbacks:{
+                    onEpochEnd:async(epoch,logs) =>{
+                        console.log("Epoch:"+epoch+ " Loss "+ logs.loss);
+                    }
+                }
+            });
+        }
+
+        doTraining(model).then(() =>{
+            alert(model.predict(tf.tensor2d([4.4,2.9,1.4,0.2],[1,4])));
+        })
+    }
+    run();
+
+    </script>    
+    <body>
+        <h1>First html page</h1>
+    </body> 
+</html>
